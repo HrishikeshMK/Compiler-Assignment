@@ -6,7 +6,7 @@
 
 #define MAX_VARS 100
 
-// Variable table to store variable names and their declaration status
+/* Variable table to store variable names and their declaration status */
 typedef struct {
     char name[50];
     int declared;
@@ -16,13 +16,13 @@ Variable varTable[MAX_VARS];
 int varCount = 0;
 int inVarDecl = 0;
 
-// Keywords
+/* Keywords */
 char *keywords[] = {
     "int", "char", "if", "else", "while", "for", "main", "begin", "end", 
     "print", "scan", "program", "VarDecl", "inc", "dec"
 };
 
-// Utility functions
+/* Utility functions */
 int isKeyword(char *str) {
     for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
         if (strcmp(str, keywords[i]) == 0) return 1;
@@ -57,51 +57,50 @@ void addVariable(char *name) {
 %}
 
 %%
-// Tokens
-"begin program:"                { printf("BEGIN_PROGRAM token\n"); }
-"end program"                   { printf("END_PROGRAM token\n"); }
-"begin VarDecl:"                 { inVarDecl = 1; printf("BEGIN_VARDECL token\n"); }
-"end VarDecl"                   { inVarDecl = 0; printf("END_VARDECL token\n"); }
-"print"                         { printf("PRINT token\n"); }
-"scan"                          { printf("SCAN token\n"); }
-"if"                            { printf("IF token\n"); }
-"else"                          { printf("ELSE token\n"); }
-"while"                         { printf("WHILE token\n"); }
-"for"                           { printf("FOR token\n"); }
-"int"                           { printf("INT token\n"); }
-"char"                          { printf("CHAR token\n"); }
 
-// Identifiers
-[a-z][a-z0-9_]*                   {
+"begin"                { printf("%-12s Keyword\n", yytext); }
+"program"              { printf("%-12s Keyword\n", yytext); }
+"begin VarDecl:"       { inVarDecl = 1; printf("%-12s Keyword\n", "begin"); printf("%-12s Keyword\n", "VarDecl"); printf("%-12s Separator\n", ":"); }
+"end VarDecl"         { inVarDecl = 0; printf("%-12s Keyword\n", "end"); printf("%-12s Keyword\n", "VarDecl"); }
+"print"               { if (inVarDecl) { printf("%-12s Error: Keyword is used as an identifier\n", yytext); } else { printf("%-12s Keyword\n", yytext); } }
+"scan"                { if (inVarDecl) { printf("%-12s Error: Keyword is used as an identifier\n", yytext); } else { printf("%-12s Keyword\n", yytext); } }
+"if"                  { printf("%-12s Keyword\n", yytext); }
+"else"                { printf("%-12s Keyword\n", yytext); }
+"while"               { printf("%-12s Keyword\n", yytext); }
+"for"                 { printf("%-12s Keyword\n", yytext); }
+"int"                 { printf("%-12s Keyword\n", yytext); }
+"char"                { printf("%-12s Keyword\n", yytext); }
+
+[a-z][a-z0-9_]*        {
     if (isKeyword(yytext)) {
         printf("Error: Keyword '%s' used as a variable name.\n", yytext);
     } else if (!isValidIdentifier(yytext)) {
-        printf("Error: Invalid identifier '%s'.\n", yytext);
+        printf("%-12s Error: invalid identifier\n", yytext);
     } else {
-        addVariable(yytext);
-        printf("IDENTIFIER token (%s)\n", yytext);
+        if (!inVarDecl) {
+            printf("Error: Variable '%s' used before declaration.\n", yytext);
+        } else {
+            addVariable(yytext);
+        }
+        printf("%-12s Identifier\n", yytext);
     }
 }
 
-// Constants
-"'"[ -~]"'"                   { printf("CHAR_CONSTANT token (%s)\n", yytext); }
-"\""[^"]*"\""            { printf("STRING_CONSTANT token (%s)\n", yytext); }
-"("[0-9]+", "[2|8|10]")"    { printf("INTEGER_CONSTANT token (%s)\n", yytext); }
-"("[0-9]+", "[0-9]*")"      { printf("Error: Invalid integer constant format %s\n", yytext); }
+"'"[ -~]"'"         { printf("%-12s CHAR_CONSTANT\n", yytext); }
+"\""[^\"]*"\"" { printf("%-12s STRING_CONSTANT\n", yytext); }
+[0-9]+,\ (2|8|10)    { printf("%-12s INTEGER_CONSTANT\n", yytext); }
+[0-9]+,\ [0-9]*     { printf("%-12s Error: invalid integer constant\n", yytext); }
 
-// Operators
-[\+\-\*/%]                     { printf("OPERATOR token (%s)\n", yytext); }
-":=" | "\+=" | "\-=" | "\*=" | "/=" | "%=" { printf("ASSIGN_OP token (%s)\n", yytext); }
+[\+\-\*/%]          { printf("%-12s Arithmetic operator\n", yytext); }
+":=" | "\\+=" | "\\-=" | "\\*=" | "/=" | "%=" { printf("%-12s Assignment operator\n", yytext); }
 
-// Separators
-[(){};:,<>]                       { printf("SEPARATOR token (%s)\n", yytext); }
+[(){};:,<>]            { printf("%-12s Separator\n", yytext); }
 
-// Ignore whitespace and comments
-[ \t\n]+                        { /* Ignore whitespace */ }
-"//".*                          { /* Ignore single-line comments */ }
-"/\*"([^*]|\*+[^*/])*"\*/" { /* Ignore multi-line comments */ }
+[ \t\n]+             { /* Ignore whitespace */ }
+"//".*               { /* Ignore single-line comments */ }
+"/*"[^*]*"*"*([^*/][^*]*"*"*)*"*/" { /* Ignore multi-line comments */ }
 
-.                                 { printf("UNKNOWN token (%s)\n", yytext); }
+.                      { printf("UNKNOWN token (%s)\n", yytext); }
 
 %%
 
@@ -109,3 +108,4 @@ int main() {
     yylex();
     return 0;
 }
+
