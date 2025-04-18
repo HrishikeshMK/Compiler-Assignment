@@ -68,9 +68,9 @@
 [a-z][a-z0-9_]*     { yylval.str = strdup(yytext); return IDENTIFIER; }
 
 
-[ \t\r\n]+          {}
-"//".*              {}
-"/*"([^*]|\*+[^*/])*\*+/  {}
+[ \t\n]+             { /* Ignore whitespace */ }
+"//".*               { /* Ignore single-line comments */ }
+"/*"[^*]*"*"*([^*/][^*]*"*"*)*"*/" { /* Ignore multi-line comments */ }
 
 
 .                   { return yytext[0]; }
