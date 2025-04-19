@@ -5,7 +5,7 @@
 %}
 
 %%
-"begin"             { return BEGIN; }
+"begin"             { return PROG_BEGIN; }
 "end"               { return END; }
 "program"           { return PROGRAM; }
 "VarDecl"           { return VARDECL; }

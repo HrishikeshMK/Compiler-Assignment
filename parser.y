@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 extern FILE *yyin;
+extern int yylineno;
+extern char* yytext;
 int yyparse();
 void yyerror(const char *s);
 int yylex();
@@ -15,6 +17,7 @@ int yylex();
     int num;
 }
 
+%define parse.error verbose
 /* Terminals from the lexer */
 %token <str> IDENTIFIER STRINGCONST CHARCONST INTCONST
 %token PROG_BEGIN END PROGRAM VARDECL
@@ -26,9 +29,11 @@ int yylex();
 %token PLUS MINUS MUL DIV MOD
 %token LPAREN RPAREN LBRACKET RBRACKET SEMICOLON COLON COMMA
 %token <num> DIGITSEQ
+%token Begin
 
 %left PLUS MINUS
 %left MUL DIV MOD
+
 
 %%
 
@@ -81,9 +86,13 @@ IfStmt          : IF Condition THEN Stmt IfElsePart
 IfElsePart      : ELSE Stmt
                 | /* empty */
                 ;
+                
+WhileStmt	: WHILE LPAREN Condition RPAREN DO CompoundStmt SEMICOLON
+         	;
 
-WhileStmt       : WHILE LPAREN Condition RPAREN DO Stmt
-                ;
+CompoundStmt	: PROG_BEGIN Stmt END
+            	;
+
 
 ForStmt         : FOR IDENTIFIER ASSIGN Exp TO Exp ForIncDec Exp DO Stmt
                 ;
@@ -116,9 +125,24 @@ IdList          : IDENTIFIER
 BlockStmt       : PROG_BEGIN StmtBlock END
                 ;
 
-Exp             : Exp PLUS Term
-                | Exp MINUS Term
-                | Term
+Exp	  	: IDENTIFIER
+	   	| CHARCONST
+	  	| integer_constant
+	  	| LPAREN Exp RPAREN
+	  	| Exp PLUS Exp
+	   	| Exp MINUS Exp
+	  	| Exp MUL Exp
+	   	| Exp DIV Exp
+	   	| Exp MOD Exp
+	  	| Exp GT Exp
+	 	| Exp LT Exp
+	  	| Exp GE Exp
+	  	| Exp LE Exp
+	  	| Exp EQ Exp
+	  	| Exp NE Exp
+	   	;
+
+integer_constant: LPAREN DIGITSEQ COMMA DIGITSEQ RPAREN
                 ;
 
 Term            : Term MUL Factor
@@ -143,10 +167,11 @@ RelOp           : GT | LT | GE | LE | EQ | NE
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Syntax error: %s\n", s);
+    fprintf(stderr, "Error at line %d: %s near token '%s'\n", yylineno, s, yytext);
 }
 
 int main(int argc, char *argv[]) {
+yydebug = 1;
 if (argc != 2) {
 fprintf(stderr, "Usage: %s <input file>\n", argv[0]);
 return 1;
