@@ -25,11 +25,11 @@ int yylex();
 %token INC DEC
 %token ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
 %token GT LT GE LE EQ NE
-%token TO THEN DO
+%token TO DO
 %token PLUS MINUS MUL DIV MOD
 %token LPAREN RPAREN LBRACKET RBRACKET SEMICOLON COLON COMMA
 %token <num> DIGITSEQ
-%token Begin
+
 
 %left PLUS MINUS
 %left MUL DIV MOD
@@ -80,17 +80,15 @@ AssignStmt      : IDENTIFIER AssignOp Exp SEMICOLON
 AssignOp        : ASSIGN | ADD_ASSIGN | SUB_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN
                 ;
 
-IfStmt          : IF Condition THEN Stmt IfElsePart
-                ;
+IfStmt		: IF LPAREN Condition RPAREN CompoundStmt SEMICOLON          
+    		| IF LPAREN Condition RPAREN CompoundStmt ELSE CompoundStmt SEMICOLON   
+    		;
 
-IfElsePart      : ELSE Stmt
-                | /* empty */
-                ;
                 
 WhileStmt	: WHILE LPAREN Condition RPAREN DO CompoundStmt SEMICOLON
          	;
 
-CompoundStmt	: PROG_BEGIN Stmt END
+CompoundStmt	: PROG_BEGIN StmtBlock END
             	;
 
 
@@ -125,22 +123,17 @@ IdList          : IDENTIFIER
 BlockStmt       : PROG_BEGIN StmtBlock END
                 ;
 
-Exp	  	: IDENTIFIER
-	   	| CHARCONST
-	  	| integer_constant
-	  	| LPAREN Exp RPAREN
-	  	| Exp PLUS Exp
-	   	| Exp MINUS Exp
-	  	| Exp MUL Exp
-	   	| Exp DIV Exp
-	   	| Exp MOD Exp
-	  	| Exp GT Exp
-	 	| Exp LT Exp
-	  	| Exp GE Exp
-	  	| Exp LE Exp
-	  	| Exp EQ Exp
-	  	| Exp NE Exp
-	   	;
+Exp : IDENTIFIER
+    | CHARCONST
+    | integer_constant
+    | LPAREN Exp RPAREN
+    | Exp PLUS Exp
+    | Exp MINUS Exp
+    | Exp MUL Exp
+    | Exp DIV Exp
+    | Exp MOD Exp
+    ;
+
 
 integer_constant: LPAREN DIGITSEQ COMMA DIGITSEQ RPAREN
                 ;
@@ -171,7 +164,7 @@ void yyerror(const char *s) {
 }
 
 int main(int argc, char *argv[]) {
-yydebug = 1;
+
 if (argc != 2) {
 fprintf(stderr, "Usage: %s <input file>\n", argv[0]);
 return 1;
